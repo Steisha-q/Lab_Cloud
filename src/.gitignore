@@ -1,0 +1,11 @@
+venv
+__pycache__/
+
+# IDE
+.idea/
+.vscode
+
+# static
+static/*
+
+.env
