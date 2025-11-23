@@ -30,7 +30,7 @@ class BookVolumeInfo(BaseModel):
     pageCount: Optional[int] = Field(
         default=None,
         description="Number of pages",
-        ge=1
+        ge=0 
     )
     categories: Optional[List[str]] = Field(
         default=None,
@@ -67,7 +67,7 @@ class ProcessedBook(BaseModel):
     title: str = Field(..., description="Book title")
     authors: List[str] = Field(..., description="List of authors")
     published_year: Optional[int] = Field(default=None, description="Publication year")
-    page_count: Optional[int] = Field(default=None, description="Number of pages")
+    page_count: Optional[int] = Field(default=None, description="Number of pages", ge=0)
     categories: List[str] = Field(default=[], description="Book categories")
     thumbnail: Optional[str] = Field(default=None, description="Thumbnail URL")
     preview_link: Optional[str] = Field(default=None, description="Preview link")
