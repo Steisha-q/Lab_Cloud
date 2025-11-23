@@ -1,18 +1,25 @@
 from fastapi import FastAPI
-from core import router as common_routes
-from storage.router import router as storage_router
+from src.external_api.router import router as external_router
 
 app = FastAPI(
-    title="Lab3 FastAPI Project",
-    description="Lab project with FastAPI and Swagger UI",
-    version="0.1.0"
+    title="Books API Integration",
+    description="FastAPI application with Google Books API integration",
+    version="1.0.0"
 )
 
+app.include_router(external_router)
+
 @app.get("/")
-def root():
-    return {"message": "FastAPI Azure Blob Storage Service Running"}
+def read_root():
+    return {
+        "message": "Welcome to Books API Integration",
+        "endpoints": {
+            "raw_data": "/external/data",
+            "processed_data": "/external/processed", 
+            "html_view": "/external/books/html"
+        }
+    }
 
-
-app.include_router(common_routes.router)
-
-app.include_router(storage_router)
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "books-api"}
