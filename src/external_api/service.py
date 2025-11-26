@@ -1,19 +1,51 @@
 import requests
+import asyncio
 from typing import List, Optional
-from src.external_api.models import GoogleBooksResponse, ProcessedBook, ProcessedBooksResponse
+from .models import GoogleBooksResponse, ProcessedBook, ProcessedBooksResponse
+import os
+
+print("🔄 Loading GoogleBooksService...")
+
+# Спершу спробуємо імпортувати модулі кешу
+try:
+    from core.cache import cache_get, cache_set
+    CACHE_AVAILABLE = True
+    print("✅ Redis cache modules imported successfully")
+except ImportError as e:
+    print(f"❌ Cannot import cache modules: {e}")
+    CACHE_AVAILABLE = False
+except Exception as e:
+    print(f"❌ Cache setup error: {e}")
+    CACHE_AVAILABLE = False
+
+print(f"🎯 Final cache status: {CACHE_AVAILABLE}")
 
 class GoogleBooksService:
     """Service for interacting with Google Books API"""
     
     base_url: str = "https://www.googleapis.com/books/v1/volumes"
     
-    def search_books(self, query: str = "python programming", max_results: int = 10) -> GoogleBooksResponse:
+    async def search_books(self, query: str = "python programming", max_results: int = 10) -> GoogleBooksResponse:
         """
         Search books using Google Books API
-        :param query: Search query
-        :param max_results: Maximum number of results
-        :return: GoogleBooksResponse with raw data
         """
+        print(f"🔍 Searching books: '{query}', max_results: {max_results}, cache: {CACHE_AVAILABLE}")
+        
+        # Ключ для кешу
+        cache_key = f"books:raw:{query}:{max_results}"
+        
+        # Перевіряємо кеш
+        if CACHE_AVAILABLE:
+            try:
+                cached = await cache_get(cache_key)
+                if cached:
+                    print("📚 Returning cached raw books data")
+                    return GoogleBooksResponse(**cached)
+                else:
+                    print("💡 No cache found, fetching from API")
+            except Exception as e:
+                print(f"⚠️ Cache get error: {e}")
+        
         params = {
             "q": query,
             "maxResults": max_results,
@@ -23,16 +55,35 @@ class GoogleBooksService:
         response = requests.get(self.base_url, params=params, timeout=10)
         response.raise_for_status()
         data = response.json()
+        
+        # Зберігаємо в кеш
+        if CACHE_AVAILABLE:
+            try:
+                await cache_set(cache_key, data, 60)
+                print("💾 Cached raw books data")
+            except Exception as e:
+                print(f"⚠️ Cache set error: {e}")
+        
         return GoogleBooksResponse(**data)
     
-    def process_books_data(self, query: str = "python programming", max_results: int = 10) -> ProcessedBooksResponse:
+    async def process_books_data(self, query: str = "python programming", max_results: int = 10) -> ProcessedBooksResponse:
         """
         Process and transform books data
-        :param query: Search query
-        :param max_results: Maximum number of results
-        :return: ProcessedBooksResponse with transformed data
         """
-        raw_data = self.search_books(query, max_results)
+        # Ключ для кешу оброблених даних
+        cache_key = f"books:processed:{query}:{max_results}"
+        
+        # Перевіряємо кеш
+        if CACHE_AVAILABLE:
+            try:
+                cached = await cache_get(cache_key)
+                if cached:
+                    print("📚 Returning cached processed books data")
+                    return ProcessedBooksResponse(**cached)
+            except Exception as e:
+                print(f"⚠️ Cache get error: {e}")
+        
+        raw_data = await self.search_books(query, max_results)
         
         processed_books = []
         
@@ -68,9 +119,19 @@ class GoogleBooksService:
             )
             processed_books.append(processed_book)
         
-        return ProcessedBooksResponse(
+        result = ProcessedBooksResponse(
             total_books=len(processed_books),
             books=processed_books
         )
+        
+        # Зберігаємо оброблені дані в кеш
+        if CACHE_AVAILABLE:
+            try:
+                await cache_set(cache_key, result.dict(), 60)
+                print("💾 Cached processed books data")
+            except Exception as e:
+                print(f"⚠️ Cache set error: {e}")
+        
+        return result
 
 books_service = GoogleBooksService()
