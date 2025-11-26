@@ -55,3 +55,6 @@ exclude_lines = [
     "raise AssertionError",
     "raise NotImplementedError"
 ]
+
+[tool.poetry.dependencies]
+sentry-sdk = "^1.40.0"
