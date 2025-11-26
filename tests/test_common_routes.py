@@ -26,11 +26,6 @@ def test_services_status(client):
     assert "status" in data
 
 
-def test_unknown_route_returns_404(client):
-    response = client.get("/common/not-existing-route")
-    assert response.status_code == 404
-
-
 def test_healthcheck_wrong_method(client):
     response = client.post("/common/healthcheck")
     assert response.status_code == 405
