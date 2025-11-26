@@ -1,8 +1,9 @@
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import SQLAlchemyError
+
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import sessionmaker
 
 load_dotenv()
 
@@ -23,19 +24,20 @@ try:
             "keepalives": 1,
             "keepalives_idle": 30,
             "keepalives_interval": 10,
-            "keepalives_count": 5
+            "keepalives_count": 5,
         },
-        pool_recycle=300
+        pool_recycle=300,
     )
-    
+
     with engine.connect() as conn:
         print("✅ Database connection successful!")
-        
+
 except Exception as e:
     print(f"❌ Database connection failed: {e}")
     raise
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 
 def get_db():
     db = SessionLocal()

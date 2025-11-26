@@ -1,5 +1,7 @@
-from redis import asyncio as aioredis
 import os
+
+from redis import asyncio as aioredis
+
 
 def get_redis() -> aioredis.Redis:
     """Підключення до Upstash Redis"""
